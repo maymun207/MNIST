@@ -9,7 +9,7 @@ import math
 # Load the model
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model('mnist_model.keras')
+    return tf.keras.models.load_model('mnist_cnn.keras')
 
 model = load_model()
 
@@ -54,30 +54,18 @@ def preprocess_digit(image):
     temp_array = np.array(temp_image)
     
     # Get Center of Mass of the resized image content
-    # Note: ndimage.center_of_mass returns (row, col) -> (y, x)
-    # We only care about the CoM of the content we just pasted.
-    # Since we pasted at (0,0), the CoM of temp_array is the CoM relative to (0,0).
     cy, cx = center_of_mass(temp_array)
     
     if math.isnan(cy) or math.isnan(cx):
-        # Fallback to geometric centering if CoM fails (empty image)
         cy, cx = new_height / 2.0, new_width / 2.0
 
-    # We want the CoM (cx, cy) to be at the center of the 28x28 image (14, 14)
     # Target position: (14, 14)
-    # Shift needed: 
-    # new_center_x = 14
-    # shift_x = new_center_x - cx
-    # Paste coordinate (top-left) = 0 + shift_x (since we pasted at 0)
-    
     shift_x = 14 - cx
     shift_y = 14 - cy
     
     # Create final image
     final_image = Image.new('L', (28, 28), color=0)
     
-    # Paste coordinates (cast to int)
-    # We are pasting the *resized* image, so its top-left is effectively shifted
     paste_x = int(round(shift_x))
     paste_y = int(round(shift_y))
     
@@ -120,7 +108,10 @@ with tab1:
             img_array = np.array(image_processed)
             img_array = img_array.astype('float32') / 255.0
             
-            # Add batch dimension
+            # Add channel dimension (28, 28, 1)
+            img_array = np.expand_dims(img_array, axis=-1)
+            
+            # Add batch dimension (1, 28, 28, 1)
             img_array = np.expand_dims(img_array, axis=0) 
             
             # Predict
@@ -143,11 +134,8 @@ with tab2:
         image = Image.open(uploaded_file).convert('L')
         
         # Auto-invert logic
-        # Convert to numpy array to check mean brightness
         img_array_temp = np.array(image)
         mean_brightness = np.mean(img_array_temp)
-        
-        # If mean is high (bright), it's likely a white background
         is_light_bg = mean_brightness > 127
         
         col1, col2 = st.columns([1, 1])
@@ -156,7 +144,6 @@ with tab2:
             st.caption(f"Mean Brightness: {mean_brightness:.1f}")
         
         with col2:
-            # Checkbox defaults to True if light background detected
             invert = st.checkbox("Invert Image", value=is_light_bg, help="Check this if the image has a white background (black text).")
             
             if is_light_bg:
@@ -170,6 +157,11 @@ with tab2:
 
         img_array = np.array(image_resized)
         img_array = img_array.astype('float32') / 255.0
+        
+        # Add channel dimension (28, 28, 1)
+        img_array = np.expand_dims(img_array, axis=-1)
+        
+        # Add batch dimension (1, 28, 28, 1)
         img_array = np.expand_dims(img_array, axis=0)
 
         if st.button('Classify Upload', type="primary"):
