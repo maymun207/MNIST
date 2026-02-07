@@ -73,19 +73,31 @@ with tab2:
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert('L')
         
+        # Auto-invert logic
+        # Convert to numpy array to check mean brightness
+        img_array_temp = np.array(image)
+        mean_brightness = np.mean(img_array_temp)
+        
+        # If mean is high (bright), it's likely a white background
+        is_light_bg = mean_brightness > 127
+        
         col1, col2 = st.columns([1, 1])
         with col1:
-            st.image(image, caption='Uploaded Image', width=150)
+            st.image(image, caption='Original Image', width=150)
+            st.caption(f"Mean Brightness: {mean_brightness:.1f}")
         
         with col2:
-            invert = st.checkbox("Invert Image (for black text on white bg)")
+            # Checkbox defaults to True if light background detected
+            invert = st.checkbox("Invert Image", value=is_light_bg, help="Check this if the image has a white background (black text).")
+            
+            if is_light_bg:
+                st.info("Detected light background. Auto-inverted.")
+            
             if invert:
                  image = ImageOps.invert(image)
+                 st.image(image, caption='Inverted Image', width=150)
         
         image_resized = image.resize((28, 28))
-        
-        # Display valid input if not displayed above
-        # st.image(image_resized, caption='Model Input (28x28)', width=100)
 
         img_array = np.array(image_resized)
         img_array = img_array.astype('float32') / 255.0
