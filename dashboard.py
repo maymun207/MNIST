@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image, ImageOps
 from streamlit_drawable_canvas import st_canvas
+from scipy.ndimage import center_of_mass
+import math
 
 # Load the model
 @st.cache_resource
@@ -18,12 +20,15 @@ tab1, tab2 = st.tabs(["Draw Digit", "Upload Image"])
 
 def preprocess_digit(image):
     """
-    Centers the digit in a 28x28 image with proper padding (like MNIST).
+    Centers the digit in a 28x28 image using Center of Mass (CoM).
+    1. Crop to bounding box.
+    2. Resize to 20x20.
+    3. Center by CoM in a 28x28 box.
     """
     # 1. Get bounding box of the non-zero (white) pixels
     bbox = image.getbbox()
     if bbox is None:
-        return image.resize((28, 28)) # Return original if empty
+        return image.resize((28, 28))
 
     # 2. Crop to the bounding box
     image_cropped = image.crop(bbox)
@@ -32,7 +37,7 @@ def preprocess_digit(image):
     old_width, old_height = image_cropped.size
     new_height, new_width = 20, 20
     
-    # Calculate scale factor
+    # Scale to max dimension 20
     if old_width > old_height:
         scale = 20.0 / old_width
         new_height = int(old_height * scale)
@@ -40,17 +45,44 @@ def preprocess_digit(image):
         scale = 20.0 / old_height
         new_width = int(old_width * scale)
     
-    image_resized_crop = image_cropped.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    image_resized = image_cropped.resize((new_width, new_height), Image.Resampling.LANCZOS)
     
-    # 4. Paste into a 28x28 black image (centered)
-    new_image = Image.new('L', (28, 28), color=0)
+    # 4. Center by Mass
+    # Create a temporary canvas and paste resized image in the corner to calc CoM
+    temp_image = Image.new('L', (28, 28), color=0)
+    temp_image.paste(image_resized, (0, 0)) # Paste at top-left
+    temp_array = np.array(temp_image)
     
-    # Calculate paste coordinates
-    x_offset = (28 - new_width) // 2
-    y_offset = (28 - new_height) // 2
+    # Get Center of Mass of the resized image content
+    # Note: ndimage.center_of_mass returns (row, col) -> (y, x)
+    # We only care about the CoM of the content we just pasted.
+    # Since we pasted at (0,0), the CoM of temp_array is the CoM relative to (0,0).
+    cy, cx = center_of_mass(temp_array)
     
-    new_image.paste(image_resized_crop, (x_offset, y_offset))
-    return new_image
+    if math.isnan(cy) or math.isnan(cx):
+        # Fallback to geometric centering if CoM fails (empty image)
+        cy, cx = new_height / 2.0, new_width / 2.0
+
+    # We want the CoM (cx, cy) to be at the center of the 28x28 image (14, 14)
+    # Target position: (14, 14)
+    # Shift needed: 
+    # new_center_x = 14
+    # shift_x = new_center_x - cx
+    # Paste coordinate (top-left) = 0 + shift_x (since we pasted at 0)
+    
+    shift_x = 14 - cx
+    shift_y = 14 - cy
+    
+    # Create final image
+    final_image = Image.new('L', (28, 28), color=0)
+    
+    # Paste coordinates (cast to int)
+    # We are pasting the *resized* image, so its top-left is effectively shifted
+    paste_x = int(round(shift_x))
+    paste_y = int(round(shift_y))
+    
+    final_image.paste(image_resized, (paste_x, paste_y))
+    return final_image
 
 
 # --- Tab 1: Draw Digit ---
@@ -60,7 +92,7 @@ with tab1:
     # Create a canvas component
     canvas_result = st_canvas(
         fill_color="black",  # Fixed fill color with some opacity
-        stroke_width=40,
+        stroke_width=30,
         stroke_color="white",
         background_color="black",
         height=280,
