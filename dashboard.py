@@ -17,7 +17,10 @@ uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert('L')  # Convert to grayscale
-    st.image(image, caption='Uploaded Image', use_column_width=True)
+    # Display image at 25% width (using columns)
+    col1, _, _, _ = st.columns(4)
+    with col1:
+        st.image(image, caption='Uploaded Image', use_column_width=True)
     
     # Preprocess
     img_array = np.array(image)
