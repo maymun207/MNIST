@@ -13,3 +13,18 @@ You are an expert at evaluating MNIST classification. When this skill is active:
 # Constraints
 - Always use 'Agg' backend for Matplotlib to ensure it runs in the agent's background terminal.
 - Use `sns.heatmap` for the confusion matrix if `seaborn` is available.
+---
+name: mnist-web-dashboard
+description: Builds a live Streamlit or Flask dashboard to visualize MNIST training and inference.
+---
+
+# Mission
+When the user asks for a "live" or "web" dashboard:
+1. Use **Streamlit** to create an interactive UI.
+2. Include a "Canvas" component where the user can draw a digit (0, 1, or 2) and have the model predict it live.
+3. Use the **Integrated Browser** (Port 8501) to display the UI.
+
+# Execution Plan
+- Check if `streamlit` is installed; if not, install it.
+- Create `app.py` with a file uploader and a prediction result display.
+- Run `streamlit run app.py --server.port 8501`.
