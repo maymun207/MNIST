@@ -6,11 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 
-def filter_data(x, y):
-    """Filter data to keep only labels 0, 1, and 2."""
-    keep = (y == 0) | (y == 1) | (y == 2)
-    x, y = x[keep], y[keep]
-    return x, y
+
 
 def main():
     print("Loading model...")
@@ -24,30 +20,13 @@ def main():
     y_probs = model.predict(x_test_norm)
     y_pred = np.argmax(y_probs, axis=1)
 
-    # 1. Generate Matplotlib grid
+    # Generate Matplotlib grid
     print("Creating visualization...")
     num_samples = 10
     indices = np.random.choice(len(x_test), num_samples, replace=False)
     
-    fig = plt.figure(figsize=(12, 10))
-    
-    # Grid for images
-    for i, idx in enumerate(indices):
-        ax = fig.add_subplot(3, 4, i + 1) # 3 rows, 4 cols (first 10)
-        img = x_test[idx]
-        true_label = y_test[idx]
-        pred_label = y_pred[idx]
-        
-        ax.imshow(img, cmap='gray')
-        ax.axis('off')
-        
-        color = 'green' if true_label == pred_label else 'red'
-        ax.set_title(f"True: {true_label}\nPred: {pred_label}", color=color)
-
-    # Confusion Matrix
     # Layout: 2 rows of 5 images, and then a confusion matrix below.
     
-    plt.clf()
     fig = plt.figure(figsize=(12, 12))
     gs = fig.add_gridspec(3, 5)
 
