@@ -60,7 +60,7 @@ with tab1:
     # Create a canvas component
     canvas_result = st_canvas(
         fill_color="black",  # Fixed fill color with some opacity
-        stroke_width=20,
+        stroke_width=40,
         stroke_color="white",
         background_color="black",
         height=280,
