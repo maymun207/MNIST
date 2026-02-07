@@ -6,15 +6,17 @@ from streamlit_drawable_canvas import st_canvas
 from scipy.ndimage import center_of_mass
 import math
 
-# Load the model
+# Load the models
 @st.cache_resource
-def load_model():
-    return tf.keras.models.load_model('mnist_cnn.keras')
+def load_models():
+    cnn = tf.keras.models.load_model('mnist_cnn.keras')
+    ann = tf.keras.models.load_model('mnist_model.keras')
+    return cnn, ann
 
-model = load_model()
+model_cnn, model_ann = load_models()
 
-st.title("MNIST Digit Classifier (0-9)")
-st.write("Draw a digit or upload an image to classify it.")
+st.title("MNIST Digit Classifier: CNN vs ANN")
+st.write("Draw a digit or upload an image to compare model performance.")
 
 tab1, tab2 = st.tabs(["Draw Digit", "Upload Image"])
 
@@ -73,6 +75,18 @@ def preprocess_digit(image):
     return final_image
 
 
+def display_prediction(header, model, input_data):
+    """Helper to display prediction for a model"""
+    st.subheader(header)
+    prediction = model.predict(input_data)
+    predicted_class = np.argmax(prediction)
+    confidence = np.max(prediction)
+    
+    c1, c2 = st.columns(2)
+    c1.metric("Prediction", str(predicted_class))
+    c2.metric("Confidence", f"{confidence:.2%}")
+    st.bar_chart(prediction[0])
+
 # --- Tab 1: Draw Digit ---
 with tab1:
     st.write("Draw a digit (0-9) below:")
@@ -108,22 +122,24 @@ with tab1:
             img_array = np.array(image_processed)
             img_array = img_array.astype('float32') / 255.0
             
-            # Add channel dimension (28, 28, 1)
-            img_array = np.expand_dims(img_array, axis=-1)
+            # Prepare inputs
+            # CNN needs (1, 28, 28, 1)
+            img_cnn = np.expand_dims(img_array, axis=-1)
+            img_cnn = np.expand_dims(img_cnn, axis=0)
             
-            # Add batch dimension (1, 28, 28, 1)
-            img_array = np.expand_dims(img_array, axis=0) 
+            # ANN needs (1, 28, 28) - Flatten layer handles the rest, but input shape in training was (28,28)
+            # Let's check train_mnist.py architecture. Flatten(input_shape=(28, 28)).
+            # So input should be (28,28) -> batched (1, 28, 28).
+            img_ann = np.expand_dims(img_array, axis=0)
+
+            col_cnn, col_ann = st.columns(2)
             
-            # Predict
-            prediction = model.predict(img_array)
-            predicted_class = np.argmax(prediction)
-            confidence = np.max(prediction)
+            with col_cnn:
+                display_prediction("CNN Model", model_cnn, img_cnn)
             
-            m_col1, m_col2 = st.columns(2)
-            m_col1.metric("Prediction", str(predicted_class))
-            m_col2.metric("Confidence", f"{confidence:.2%}")
-            
-            st.bar_chart(prediction[0])
+            with col_ann:
+                display_prediction("ANN Model", model_ann, img_ann)
+
 
 # --- Tab 2: Upload Image ---
 with tab2:
@@ -158,20 +174,18 @@ with tab2:
         img_array = np.array(image_resized)
         img_array = img_array.astype('float32') / 255.0
         
-        # Add channel dimension (28, 28, 1)
-        img_array = np.expand_dims(img_array, axis=-1)
+        # Prepare inputs
+        img_cnn = np.expand_dims(img_array, axis=-1)
+        img_cnn = np.expand_dims(img_cnn, axis=0)
         
-        # Add batch dimension (1, 28, 28, 1)
-        img_array = np.expand_dims(img_array, axis=0)
+        img_ann = np.expand_dims(img_array, axis=0)
 
         if st.button('Classify Upload', type="primary"):
-            prediction = model.predict(img_array)
-            predicted_class = np.argmax(prediction)
-            confidence = np.max(prediction)
+            col_cnn, col_ann = st.columns(2)
             
-            m_col1, m_col2 = st.columns(2)
-            m_col1.metric("Prediction", str(predicted_class))
-            m_col2.metric("Confidence", f"{confidence:.2%}")
+            with col_cnn:
+                display_prediction("CNN Model", model_cnn, img_cnn)
             
-            st.bar_chart(prediction[0])
+            with col_ann:
+                display_prediction("ANN Model", model_ann, img_ann)
 
