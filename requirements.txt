@@ -4,3 +4,6 @@ numpy
 pillow
 streamlit-drawable-canvas
 scipy
+matplotlib
+seaborn
+scikit-learn

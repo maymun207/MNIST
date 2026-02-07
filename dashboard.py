@@ -15,8 +15,34 @@ def load_models():
 
 model_cnn, model_ann = load_models()
 
-st.title("MNIST Digit Classifier: CNN vs ANN")
-st.write("Draw a digit or upload an image to compare model performance.")
+# Factory Constants
+MACHINES = [
+    "Press",
+    "Dryer",
+    "Glazer",
+    "Digital Print",
+    "Kiln",
+    "Quality Control",
+    "Packaging"
+]
+
+# Sidebar
+st.sidebar.title("🏭 Factory Pipeline")
+selected_machine = st.sidebar.radio("Go to Machine:", MACHINES)
+
+# Visual Pipeline Progress
+step_idx = MACHINES.index(selected_machine)
+st.sidebar.progress((step_idx + 1) / len(MACHINES))
+
+if selected_machine != "Quality Control":
+    st.title(f"Station: {selected_machine}")
+    st.info(f"📍 Current Station: **{selected_machine}**")
+    st.warning("Manufacturing in progress...")
+    st.stop()
+
+st.title("Station: Quality Control (QC)")
+st.write("### MNIST Digit Classifier")
+st.write("Draw a digit or upload an image to verify production quality.")
 
 tab1, tab2 = st.tabs(["Draw Digit", "Upload Image"])
 
