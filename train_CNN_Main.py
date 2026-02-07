@@ -15,6 +15,16 @@ def main():
     x_train = x_train.reshape(-1, 28, 28, 1)
     x_test = x_test.reshape(-1, 28, 28, 1)
 
+    # Data Augmentation
+    print("Configuring Data Augmentation...")
+    datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+        rotation_range=10,
+        zoom_range=0.1,
+        width_shift_range=0.1,
+        height_shift_range=0.1
+    )
+    datagen.fit(x_train)
+
     # Build CNN model
     print("Building CNN model...")
     model = tf.keras.models.Sequential([
@@ -35,8 +45,10 @@ def main():
     model.summary()
 
     # Train
-    print("Starting training...")
-    model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))
+    print("Starting training with Data Augmentation...")
+    model.fit(datagen.flow(x_train, y_train, batch_size=32),
+              epochs=5,
+              validation_data=(x_test, y_test))
 
     # Evaluate
     print("\nEvaluating model...")
