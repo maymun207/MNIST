@@ -18,8 +18,6 @@ def main():
 
     print("Loading and filtering data...")
     (_, _), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-    x_test_orig = x_test.copy() # Keep original for plotting
-    x_test, y_test = filter_data(x_test, y_test)
     x_test_norm = x_test / 255.0
 
     print("Generating predictions...")
@@ -31,7 +29,7 @@ def main():
     num_samples = 10
     indices = np.random.choice(len(x_test), num_samples, replace=False)
     
-    fig = plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 10))
     
     # Grid for images
     for i, idx in enumerate(indices):
@@ -47,14 +45,10 @@ def main():
         ax.set_title(f"True: {true_label}\nPred: {pred_label}", color=color)
 
     # Confusion Matrix
-    ax_cm = fig.add_subplot(3, 4, 11) # Place in the mix or separate? 
-    # Actually, let's look at the layout. 3x4=12 slots. 10 images. 2 slots left.
-    # I can put the confusion matrix in the last 2 slots or use a different layout.
-    # Let's do a GridSpec or just subplots.
-    # Let's do 2 rows of 5 images, and then a confusion matrix below.
+    # Layout: 2 rows of 5 images, and then a confusion matrix below.
     
     plt.clf()
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(12, 12))
     gs = fig.add_gridspec(3, 5)
 
     # Images
@@ -76,7 +70,7 @@ def main():
     ax_cm = fig.add_subplot(gs[2, :]) # Take entire bottom row
     cm = confusion_matrix(y_test, y_pred)
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax_cm, 
-                xticklabels=[0,1,2], yticklabels=[0,1,2])
+                xticklabels=range(10), yticklabels=range(10))
     ax_cm.set_xlabel('Predicted')
     ax_cm.set_ylabel('True')
     ax_cm.set_title('Confusion Matrix')
