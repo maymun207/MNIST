@@ -16,6 +16,43 @@ st.write("Draw a digit or upload an image to classify it.")
 
 tab1, tab2 = st.tabs(["Draw Digit", "Upload Image"])
 
+def preprocess_digit(image):
+    """
+    Centers the digit in a 28x28 image with proper padding (like MNIST).
+    """
+    # 1. Get bounding box of the non-zero (white) pixels
+    bbox = image.getbbox()
+    if bbox is None:
+        return image.resize((28, 28)) # Return original if empty
+
+    # 2. Crop to the bounding box
+    image_cropped = image.crop(bbox)
+
+    # 3. Resize to fit in a 20x20 box (preserve aspect ratio)
+    old_width, old_height = image_cropped.size
+    new_height, new_width = 20, 20
+    
+    # Calculate scale factor
+    if old_width > old_height:
+        scale = 20.0 / old_width
+        new_height = int(old_height * scale)
+    else:
+        scale = 20.0 / old_height
+        new_width = int(old_width * scale)
+    
+    image_resized_crop = image_cropped.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    
+    # 4. Paste into a 28x28 black image (centered)
+    new_image = Image.new('L', (28, 28), color=0)
+    
+    # Calculate paste coordinates
+    x_offset = (28 - new_width) // 2
+    y_offset = (28 - new_height) // 2
+    
+    new_image.paste(image_resized_crop, (x_offset, y_offset))
+    return new_image
+
+
 # --- Tab 1: Draw Digit ---
 with tab1:
     st.write("Draw a digit (0-9) below:")
@@ -41,14 +78,14 @@ with tab1:
             image = Image.fromarray(input_image)
             image_gray = image.convert('L') 
             
-            # Resize to 28x28
-            image_resized = image_gray.resize((28, 28))
+            # Apply preprocessing (Center & Crop)
+            image_processed = preprocess_digit(image_gray)
             
-            st.write("Model Input:")
-            st.image(image_resized, width=100)
+            st.write("Model Input (Processed):")
+            st.image(image_processed, width=100)
             
             # Convert to numpy array and normalize
-            img_array = np.array(image_resized)
+            img_array = np.array(image_processed)
             img_array = img_array.astype('float32') / 255.0
             
             # Add batch dimension
