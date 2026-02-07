@@ -21,7 +21,8 @@ def main():
         rotation_range=10,
         zoom_range=0.1,
         width_shift_range=0.1,
-        height_shift_range=0.1
+        height_shift_range=0.1,
+        shear_range=0.1
     )
     datagen.fit(x_train)
 
@@ -47,7 +48,7 @@ def main():
     # Train
     print("Starting training with Data Augmentation...")
     model.fit(datagen.flow(x_train, y_train, batch_size=32),
-              epochs=5,
+              epochs=20,
               validation_data=(x_test, y_test))
 
     # Evaluate
