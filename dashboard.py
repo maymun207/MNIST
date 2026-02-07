@@ -6,11 +6,12 @@ from PIL import Image
 # Load the model
 @st.cache_resource
 def load_model():
+    # v2: Load 0-9 model
     return tf.keras.models.load_model('mnist_model.keras')
 
 model = load_model()
 
-st.title("MNIST Digit Classifier (0, 1, 2)")
+st.title("MNIST Digit Classifier (0-9)")
 st.write("Upload an image of a digit to classify it.")
 
 uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg", "webp"])

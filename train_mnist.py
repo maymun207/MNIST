@@ -11,23 +11,19 @@ def filter_data(x, y):
 def main():
     print("Loading data...")
     # Load data
+    # Load data
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-
-    # Filter data
-    print("Filtering data (0, 1, 2 only)...")
-    x_train, y_train = filter_data(x_train, y_train)
-    x_test, y_test = filter_data(x_test, y_test)
 
     # Normalize
     x_train, x_test = x_train / 255.0, x_test / 255.0
 
     # Build model
-    print("Building model...")
+    print("Building model for digits 0-9...")
     model = tf.keras.models.Sequential([
         tf.keras.layers.Flatten(input_shape=(28, 28)),
         tf.keras.layers.Dense(512, activation='relu'),
         tf.keras.layers.Dense(256, activation='relu'),
-        tf.keras.layers.Dense(3, activation='softmax')
+        tf.keras.layers.Dense(10, activation='softmax')
     ])
 
     # Compile
